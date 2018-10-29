@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+    <!-- 继承自AuthorizingRealm的自定义Realm,即指定Shiro验证用户登录 -->
+    <bean id="myRealm" class="com.book.common.security.MyRealm">
+        <property name="credentialsMatcher" ref="passwordMatcher"/>
+    </bean>
+    <bean id="passwordMatcher" class="com.book.common.security.CustomCredentialsMatcher"/>
+
+    <!-- Shiro默认会使用Servlet容器的Session,可通过sessionMode属性来指定使用Shiro原生Session -->
+    <!-- 即<property name="sessionMode" value="native"/>,详细说明见官方文档 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="myRealm"/>
+    </bean>
+
+    <!-- Shiro主过滤器本身功能十分强大,其强大之处就在于它支持任何基于URL路径表达式的、自定义的过滤器的执行 -->
+    <!-- Web应用中,Shiro可控制的Web请求必须经过Shiro主过滤器的拦截,Shiro对基于Spring的Web应用提供了完美的支持 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!-- Shiro的核心安全接口,这个属性是必须的 -->
+        <property name="securityManager" ref="securityManager"/>
+        <!-- 要求登录时的链接(可根据项目的URL进行替换),非必须的属性,默认会自动寻找Web工程根目录下的"/login.jsp"页面 -->
+        <property name="loginUrl" value="pages/login"/>
+        <!-- 登录成功后要跳转的连接 -->
+        <!-- <property name="successUrl" value="/system/main"/> -->
+        <!-- 用户访问未对其授权的资源显示的连接 -->
+        <!--<property name="unauthorizedUrl" value="/error/403.html"/>-->
+        <property name="filterChainDefinitions">
+            <!--
+               页面需要的权限.
+               1). anon 可以被匿名访问
+               2). authc 必须认证(即登录)后才可能访问的页面.
+               3). logout 登出
+               4). roles 角色过滤器
+            -->
+            <value>
+                /static/**=anon
+                /login=anon
+                <!--/management/*=authc ,roles[administrator]-->
+            </value>
+        </property>
+    </bean>
+
+    <!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+</beans>

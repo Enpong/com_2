@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.book.book.dao.BookMapper" >
+  <resultMap id="BaseResultMap" type="com.book.book.entity.Book" >
+    <id column="b.id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="owner" property="owner" jdbcType="INTEGER" />
+    <result column="createtime" property="createtime" jdbcType="DATE" />
+    <result column="updatetime" property="updatetime" jdbcType="TIMESTAMP" />
+    <result column="state" property="state" jdbcType="BIT" />
+    <result column="location" property="location" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="RecordResultMap" type="com.book.record.entity.Record" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="book_id" property="bookId" jdbcType="INTEGER" />
+    <result column="borrowtime" property="borrowtime" jdbcType="TIMESTAMP" />
+    <result column="updatetime" property="updatetime" jdbcType="TIMESTAMP" />
+    <result column="state" property="state" jdbcType="INTEGER" />
+    <association property="user" resultMap="UserResultMap"/>
+  </resultMap>
+  <resultMap id="UserResultMap" type="com.book.user.entity.User" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="user" property="user" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="BIT" />
+    <result column="createtime" property="createtime" jdbcType="TIMESTAMP" />
+    <result column="updatetime" property="updatetime" jdbcType="TIMESTAMP" />
+    <result column="department" property="department" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    b.id, name, code, owner, b.createtime, b.updatetime, b.state, location, type
+  </sql>
+  <sql id="Record_Column_List" >
+    ur.id, user_id, book_id, borrowtime, ur.updatetime, ur.state,ur.username
+  </sql>
+  <sql id="User_Column_List" >
+    u.id, user, password, username, u.state, u.createtime, u.updatetime, department
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from book b
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKeyState" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+  select
+  <include refid="Base_Column_List" />
+  from book b
+  where b.id = #{id}
+  and state = 1
+</select>
+  <select id="selectBookBorrowRecord" resultMap="RecordResultMap">
+    select
+    ur.user_id , u.username , u.department
+    from user_book_record ur
+    left join user u on u.id = ur.user_id
+    where ur.book_id = #{id}
+    and ur.state = 1
+  </select>
+  <select id="selectBookPage" resultMap="BaseResultMap">
+    select
+    b.id, name, code, b.createtime,  location, type
+    from book b
+    where b.state = true
+      <if test="type != null">
+        and b.type = #{type}
+      </if>
+      <if test="location != null">
+        and b.location = #{location}
+      </if>
+      <if test="code != null">
+        and b.code like '${code}%'
+      </if>
+    limit #{startRow} , #{pageSize}
+  </select>
+  <select id="selectSearchBookPage" resultMap="BaseResultMap">
+    select
+    b.id, name, code, b.createtime,  location, type
+    from book b
+    where b.name
+    like '%${keyWord}%'
+    limit #{startRow} , #{pageSize}
+  </select>
+  <select id="countByCondition" resultType="int">
+   select
+   count(0)
+   from book b
+   where b.state = true
+    <if test="type != null">
+      and b.type = #{type}
+    </if>
+    <if test="location != null">
+      and b.location = #{location}
+    </if>
+    <if test="code != null">
+      and b.code like '${code}%'
+    </if>
+  </select>
+  <select id="countBySearchCondition" resultType="int">
+    select
+    count(0)
+    from book b
+    where b.name
+    like '%${keyWord}%'
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from book
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    insert into book (id, name, code, 
+      owner, createtime, updatetime, 
+      state, location, type)
+    values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR}, 
+      #{owner,jdbcType=INTEGER}, #{createtime,jdbcType=DATE}, #{updatetime,jdbcType=TIMESTAMP}, 
+      #{state,jdbcType=BIT}, #{location,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" useGeneratedKeys="true" keyProperty="id">
+    insert into book
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="code != null" >
+        code,
+      </if>
+      <if test="owner != null" >
+        owner,
+      </if>
+      <if test="createtime != null" >
+        createtime,
+      </if>
+      <if test="updatetime != null" >
+        updatetime,
+      </if>
+      <if test="state != null" >
+        state,
+      </if>
+      <if test="location != null" >
+        location,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="owner != null" >
+        #{owner,jdbcType=INTEGER},
+      </if>
+      <if test="createtime != null" >
+        #{createtime,jdbcType=DATE},
+      </if>
+      <if test="updatetime != null" >
+        #{updatetime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=BIT},
+      </if>
+      <if test="location != null" >
+        #{location,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.book.book.entity.Book" >
+    update book
+    <set >
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="owner != null" >
+        owner = #{owner,jdbcType=INTEGER},
+      </if>
+      <if test="createtime != null" >
+        createtime = #{createtime,jdbcType=DATE},
+      </if>
+      <if test="updatetime != null" >
+        updatetime = #{updatetime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="state != null" >
+        state = #{state,jdbcType=BIT},
+      </if>
+      <if test="location != null" >
+        location = #{location,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.book.book.entity.Book" >
+    update book
+    set name = #{name,jdbcType=VARCHAR},
+      code = #{code,jdbcType=VARCHAR},
+      owner = #{owner,jdbcType=INTEGER},
+      createtime = #{createtime,jdbcType=DATE},
+      updatetime = #{updatetime,jdbcType=TIMESTAMP},
+      state = #{state,jdbcType=BIT},
+      location = #{location,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
